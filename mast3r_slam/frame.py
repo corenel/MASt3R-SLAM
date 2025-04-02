@@ -218,9 +218,9 @@ class SharedStates:
 
 
 class SharedKeyframes:
-    def __init__(self, manager, h, w, buffer=512, dtype=torch.float32, device="cuda"):
+    def __init__(self, manager, h, w, buffer=512, dtype=torch.float32, device="cuda", index_name="i"):
         self.lock = manager.RLock()
-        self.n_size = manager.Value("i", 0)
+        self.n_size = manager.Value(index_name, 0)
 
         self.h, self.w = h, w
         self.buffer = buffer

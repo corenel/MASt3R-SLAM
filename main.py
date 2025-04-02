@@ -156,6 +156,11 @@ if __name__ == "__main__":
     parser.add_argument("--save-as", default="default")
     parser.add_argument("--no-viz", action="store_true")
     parser.add_argument("--calib", default="")
+    parser.add_argument(
+        "--save-all-traj",
+        action="store_true",
+        help="Save trajectory of all frames in a separate file",
+    )
 
     args = parser.parse_args()
 
@@ -184,6 +189,10 @@ if __name__ == "__main__":
         )
 
     keyframes = SharedKeyframes(manager, h, w)
+    if args.save_all_traj:
+        all_frames = SharedKeyframes(
+            manager, h, w, buffer=len(dataset), index_name="frame_id"
+        )
     states = SharedStates(manager, h, w)
 
     if not args.no_viz:
@@ -213,9 +222,12 @@ if __name__ == "__main__":
     if dataset.save_results:
         save_dir, seq_name = eval.prepare_savedir(args, dataset)
         traj_file = save_dir / f"{seq_name}.txt"
+        all_traj_file = save_dir / f"{seq_name}_all_frames.txt"
         recon_file = save_dir / f"{seq_name}.ply"
         if traj_file.exists():
             traj_file.unlink()
+        if all_traj_file.exists():
+            all_traj_file.unlink()
         if recon_file.exists():
             recon_file.unlink()
 
@@ -303,6 +315,10 @@ if __name__ == "__main__":
                     if len(states.global_optimizer_tasks) == 0:
                         break
                 time.sleep(0.01)
+
+        if args.save_all_traj:
+            all_frames.append(frame)
+
         # log time
         if i % 30 == 0:
             FPS = i / (time.time() - fps_timer)
@@ -312,6 +328,10 @@ if __name__ == "__main__":
     if dataset.save_results:
         save_dir, seq_name = eval.prepare_savedir(args, dataset)
         eval.save_traj(save_dir, f"{seq_name}.txt", dataset.timestamps, keyframes)
+        if args.save_all_traj:
+            eval.save_traj(
+                save_dir, f"{seq_name}_all_frames.txt", dataset.timestamps, all_frames
+            )
         eval.save_reconstruction(
             save_dir,
             f"{seq_name}.ply",
